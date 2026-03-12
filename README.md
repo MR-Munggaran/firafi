@@ -1,37 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# firafi 💰
 
-## Getting Started
+**firafi** adalah aplikasi manajemen keuangan personal dan bersama (*couple*) yang dirancang untuk membantu individu maupun pasangan mengelola anggaran, melacak transaksi, dan mencapai target keuangan bersama secara transparan.
 
-First, run the development server:
+## ✨ Fitur Utama
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+* **Autentikasi Aman**: Registrasi dan login menggunakan Supabase Auth dengan dukungan session server-side.
+* **Sistem Pasangan (Couple System)**: Hubungkan akun Anda dengan pasangan menggunakan kode undangan unik untuk berbagi dompet, anggaran, dan target keuangan.
+* **Manajemen Dompet (Wallets)**: Buat dan pantau saldo dari berbagai sumber dana seperti Tunai, Bank, atau e-Wallet.
+* **Penyusunan Anggaran (Budgeting)**: Rencanakan pengeluaran bulanan dan alokasikan dana menggunakan preset otomatis.
+* **Pelacakan Transaksi**: Catat pemasukan dan pengeluaran secara detail dengan kategori dan filter.
+* **Target Keuangan (Goals)**: Tetapkan target menabung dan pantau progres pencapaiannya bersama pasangan.
+* **Momen (Moments)**: Simpan catatan atau foto momen penting terkait aktivitas keuangan Anda bersama pasangan.
+* **Dashboard Informatif**: Ringkasan saldo total, pengeluaran terbaru, dan status anggaran dalam satu tampilan.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🚀 Teknologi
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+* **Framework**: [Next.js 15 (App Router)](https://nextjs.org/).
+* **Bahasa**: [TypeScript](https://www.typescriptlang.org/).
+* **Database & ORM**: [PostgreSQL](https://www.postgresql.org/) dengan [Drizzle ORM](https://orm.drizzle.team/).
+* **Backend as a Service**: [Supabase](https://supabase.com/) (Auth, Database, Storage).
+* **Styling**: [Tailwind CSS](https://tailwindcss.com/) & [shadcn/ui](https://ui.shadcn.com/).
+* **Validasi**: [Zod](https://zod.dev/).
+* **Runtime**: [Bun](https://bun.sh/).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🛠️ Instalasi
 
-## Learn More
+1.  **Clone repositori**:
+    ```bash
+    git clone [https://github.com/username/firafi.git](https://github.com/username/firafi.git)
+    cd firafi
+    ```
 
-To learn more about Next.js, take a look at the following resources:
+2.  **Instal dependensi**:
+    ```bash
+    bun install
+    ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+3.  **Konfigurasi Environment**:
+    Buat file `.env` di akar direktori dan isi dengan kredensial Supabase serta database Anda:
+    ```env
+    NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+    DATABASE_URL=your_postgresql_url
+    ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+4.  **Push Schema Database**:
+    ```bash
+    bun x drizzle-kit push
+    ```
 
-## Deploy on Vercel
+5.  **Jalankan aplikasi**:
+    ```bash
+    bun dev
+    ```
+    Buka [http://localhost:3000](http://localhost:3000) di browser Anda.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 📖 Alur Penggunaan
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-"# firafi" 
+1.  **Daftar & Login**: Buat akun baru dan lengkapi profil Anda pada tahap onboarding.
+2.  **Hubungkan Pasangan**: Buka menu *Settings*, salin kode undangan Anda dan berikan ke pasangan, atau masukkan kode pasangan Anda untuk sinkronisasi data.
+3.  **Setup Keuangan**: Tambahkan dompet awal Anda di menu *Wallets* dan buat rencana anggaran bulanan di menu *Budget*.
+4.  **Mulai Mencatat**: Gunakan fitur *Quick Add* di Dashboard untuk mencatat transaksi harian dengan cepat.
