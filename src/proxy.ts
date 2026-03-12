@@ -3,7 +3,11 @@ import { NextResponse, type NextRequest } from "next/server";
 
 const PUBLIC_ROUTES = ["/login", "/register", "/auth"];
 
-export async function middleware(request: NextRequest) {
+/**
+ * Di Next.js 16, fungsi utama harus diekspor dengan nama 'proxy'
+ * jika menggunakan konvensi file src/proxy.ts
+ */
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   let response = NextResponse.next({ request });
@@ -29,7 +33,7 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Refresh session agar token tidak expired
+  // Penting: getUser() akan merefresh session secara otomatis jika diperlukan
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -37,7 +41,7 @@ export async function middleware(request: NextRequest) {
   const isPublicRoute = PUBLIC_ROUTES.some((r) => pathname.startsWith(r));
   const isRoot = pathname === "/";
 
-  // Belum login
+  // Alur Proteksi Halaman
   if (!user) {
     if (isPublicRoute || isRoot) return response;
     const url = request.nextUrl.clone();
@@ -45,18 +49,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Sudah login → tidak perlu ke halaman publik
   if (isPublicRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);
   }
 
-  // Pengecekan couple (butuh Drizzle/Node.js) dilakukan di server component
-  // masing-masing halaman — bukan di sini karena middleware berjalan di Edge.
   return response;
 }
 
+// Konfigurasi matcher agar proxy tidak berjalan di file statis
 export const config = {
   matcher: [
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
