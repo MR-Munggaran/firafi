@@ -28,7 +28,7 @@ export default async function NewTransactionPage() {
         </div>
       </div>
 
-      <TransactionForm wallets={wallets} members={members} />
+      <TransactionForm wallets={wallets} members={members} defaultTemplate={null} />
     </>
   );
 }
