@@ -1,23 +1,28 @@
 @config "../../tailwind.config.ts";
 @import "tailwindcss";
 
-
+/* ============================================================
+   BASE / DEFAULT THEME (Rose — pink merah muda)
+   ============================================================ */
 :root {
   --bg:          #fdf8f6;
   --bg-card:     #ffffff;
   --bg-muted:    #fef1ee;
   --border:      #f3e8e5;
 
-  --rose-400:    #fb7185;
-  --rose-500:    #f43f5e;
-  --rose-600:    #e11d48;
+  --accent-400:  #fb7185;
+  --accent-500:  #f43f5e;
+  --accent-600:  #e11d48;
+
+  --accent-50:   #fff1f2;
+  --accent-100:  #ffe4e6;
 
   --text-primary:   #1c1917;
   --text-secondary: #78716c;
   --text-muted:     #a8a29e;
 
-  --shadow-rose: 0 4px 24px -4px rgba(244,63,94,0.14);
-  --shadow-card: 0 1px 8px 0 rgba(28,25,23,0.06);
+  --shadow-accent: 0 4px 24px -4px rgba(244,63,94,0.14);
+  --shadow-card:   0 1px 8px 0 rgba(28,25,23,0.06);
 
   --font-display: "Cormorant Garamond", Georgia, serif;
   --font-body:    "DM Sans", system-ui, sans-serif;
@@ -25,6 +30,66 @@
   --bottom-nav-h: 72px;
 }
 
+/* ============================================================
+   TEMA: KUNING (Amber)
+   ============================================================ */
+[data-theme="amber"] {
+  --bg:          #fdfbf5;
+  --bg-card:     #ffffff;
+  --bg-muted:    #fef9ec;
+  --border:      #f5ecd0;
+
+  --accent-400:  #fbbf24;
+  --accent-500:  #f59e0b;
+  --accent-600:  #d97706;
+
+  --accent-50:   #fffbeb;
+  --accent-100:  #fef3c7;
+
+  --shadow-accent: 0 4px 24px -4px rgba(245,158,11,0.18);
+}
+
+/* ============================================================
+   TEMA: HIJAU (Emerald)
+   ============================================================ */
+[data-theme="emerald"] {
+  --bg:          #f5fdf8;
+  --bg-card:     #ffffff;
+  --bg-muted:    #ecfdf5;
+  --border:      #d1fae5;
+
+  --accent-400:  #34d399;
+  --accent-500:  #10b981;
+  --accent-600:  #059669;
+
+  --accent-50:   #ecfdf5;
+  --accent-100:  #d1fae5;
+
+  --shadow-accent: 0 4px 24px -4px rgba(16,185,129,0.16);
+}
+
+/* ============================================================
+   TEMA: ORANGE
+   ============================================================ */
+[data-theme="orange"] {
+  --bg:          #fdf9f5;
+  --bg-card:     #ffffff;
+  --bg-muted:    #fff4ed;
+  --border:      #fed7aa;
+
+  --accent-400:  #fb923c;
+  --accent-500:  #f97316;
+  --accent-600:  #ea580c;
+
+  --accent-50:   #fff7ed;
+  --accent-100:  #ffedd5;
+
+  --shadow-accent: 0 4px 24px -4px rgba(249,115,22,0.18);
+}
+
+/* ============================================================
+   GLOBAL RESET & BASE
+   ============================================================ */
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html { -webkit-text-size-adjust: 100%; }
 
@@ -36,10 +101,14 @@ body {
   line-height: 1.6;
   padding-bottom: var(--bottom-nav-h);
   min-height: 100dvh;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 .font-display { font-family: var(--font-display); }
 
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
 @keyframes slide-up {
   from { opacity: 0; transform: translateY(14px); }
   to   { opacity: 1; transform: translateY(0); }

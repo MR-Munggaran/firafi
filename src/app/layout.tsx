@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
@@ -21,26 +22,28 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="id">
       <body>
-        {/* konten halaman */}
-        <main className="max-w-md mx-auto px-4 pt-6 min-h-dvh">
-          {children}
-        </main>
+        <ThemeProvider>
+          {/* konten halaman */}
+          <main className="max-w-md mx-auto px-4 pt-6 min-h-dvh">
+            {children}
+          </main>
 
-        {/* navigasi bawah */}
-        <BottomNav />
+          {/* navigasi bawah */}
+          <BottomNav />
 
-        {/* toast notifications */}
-        <Toaster
-          richColors
-          position="top-center"
-          toastOptions={{
-            style: {
-              fontFamily: "var(--font-body)",
-              fontSize: "14px",
-              borderRadius: "16px",
-            },
-          }}
-        />
+          {/* toast notifications */}
+          <Toaster
+            richColors
+            position="top-center"
+            toastOptions={{
+              style: {
+                fontFamily: "var(--font-body)",
+                fontSize: "14px",
+                borderRadius: "16px",
+              },
+            }}
+          />
+        </ThemeProvider>
       </body>
     </html>
   );

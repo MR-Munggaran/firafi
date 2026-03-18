@@ -34,27 +34,36 @@ export async function getMoments(limit = 50): Promise<MomentWithRelations[]> {
 
 // ─── CREATE ───────────────────────────────────────────────────────────────────
 
+// actions/moments.ts - CREATE SECTION
 export async function createMoment(input: unknown): Promise<ActionResult<Moment>> {
   const session = await getSession();
+  console.log("[createMoment] session:", session); // ← cek session valid
   if (!session.ok) return session.error;
 
   const parsed = momentSchema.safeParse(input);
+  console.log("[createMoment] parsed:", parsed); // ← cek input lolos validasi
   if (!parsed.success) {
     return fail("Validasi gagal", parsed.error.flatten().fieldErrors as Record<string, string[]>);
   }
 
-  const { imageUrl, caption, transactionId } = parsed.data;
+  const { imageUrl, caption, transactionId, date } = parsed.data; // Pastikan date ada di schema zod-mu
 
-  const [moment] = await db.insert(moments).values({
-    coupleId:      session.coupleId,
-    uploaderId:    session.userId,
-    imageUrl,
-    caption:       caption ?? null,
-    transactionId: transactionId ?? null,
-  }).returning();
+  try {
+    const [moment] = await db.insert(moments).values({
+      coupleId:      session.coupleId,
+      uploaderId:    session.userId,
+      imageUrl,
+      caption:       caption ?? null,
+      transactionId: transactionId ?? null,
+      createdAt:     date ? new Date(date) : new Date(), // Simpan tanggal pilihan user
+    }).returning();
 
-  revalidatePath("/moments");
-  return ok(moment);
+    revalidatePath("/moments");
+    return ok(moment);
+  } catch (dbError) {
+    console.error("Database Error:", dbError);
+    return fail("Gagal menyimpan ke database. Cek koneksi Supabase kamu.");
+  }
 }
 
 // ─── DELETE ───────────────────────────────────────────────────────────────────

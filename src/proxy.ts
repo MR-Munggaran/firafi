@@ -16,11 +16,9 @@ export async function proxy(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          // Sinkronisasi ke request agar getUser() mendapatkan data terbaru
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           );
-          // Sinkronisasi ke response agar dikirim ke browser
           response = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) =>
             response.cookies.set(name, value, options)
@@ -30,13 +28,13 @@ export async function proxy(request: NextRequest) {
     }
   );
 
-  // Validasi session
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const isPublicRoute = PUBLIC_ROUTES.some((r) => pathname.startsWith(r));
   const isRoot = pathname === "/";
 
-  // Alur Proteksi
   if (!user) {
     if (isPublicRoute || isRoot) return response;
     return NextResponse.redirect(new URL("/login", request.url));
@@ -51,6 +49,7 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    // Exclude: static files, images, AND /api routes
+    "/((?!_next/static|_next/image|favicon.ico|api|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

@@ -25,11 +25,12 @@ export function BudgetCard({ budget, spent }: Props) {
   const isOver    = spent > limit;
   const isWarn    = pct >= 75 && !isOver;
 
+  // status warna: over=red, warn=amber, aman=accent tema
   const status = isOver
-    ? { bar: "bg-red-400",     text: "text-red-500",     bg: "bg-red-50",     border: "border-red-100",     label: "Over!" }
+    ? { bar: "bg-red-400",   text: "text-red-500",   bg: "bg-red-50",   border: "border-red-100",   label: "Over!"  }
     : isWarn
-    ? { bar: "bg-amber-400",   text: "text-amber-500",   bg: "bg-amber-50",   border: "border-amber-100",   label: "Hampir" }
-    : { bar: "bg-emerald-400", text: "text-emerald-500", bg: "bg-emerald-50", border: "border-emerald-100", label: "Aman" };
+    ? { bar: "bg-amber-400", text: "text-amber-500", bg: "bg-amber-50", border: "border-amber-100", label: "Hampir" }
+    : { bar: "",             text: "",               bg: "",             border: "",                 label: "Aman"   };
 
   async function handleDelete() {
     if (!confirm("Hapus budget ini?")) return;
@@ -54,7 +55,7 @@ export function BudgetCard({ budget, spent }: Props) {
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-card p-4">
+    <div className="bg-white rounded-2xl p-4" style={{ boxShadow: "var(--shadow-card)" }}>
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-stone-700 leading-tight truncate">
@@ -68,7 +69,8 @@ export function BudgetCard({ budget, spent }: Props) {
                 type="number"
                 value={newAmount}
                 onChange={(e) => setNewAmount(e.target.value)}
-                className="w-28 text-xs text-stone-700 bg-stone-50 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-rose-200"
+                className="w-28 text-xs text-stone-700 bg-stone-50 rounded-lg px-2 py-1 focus:outline-none"
+                style={{ outline: "none", boxShadow: "0 0 0 2px var(--accent-100)" }}
                 autoFocus
               />
               <button
@@ -92,16 +94,33 @@ export function BudgetCard({ budget, spent }: Props) {
           )}
         </div>
 
-        {/* fix: hapus opacity-0/group-hover — selalu visible di mobile */}
-        <div className="flex items-center gap-1.5 ml-2 flex-shrink-0">
-          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${status.bg} ${status.text} ${status.border}`}>
-            {status.label}
-          </span>
+        <div className="flex items-center gap-1.5 ml-2 shrink-0">
+          {/* badge status */}
+          {isOver || isWarn ? (
+            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${status.bg} ${status.text} ${status.border}`}>
+              {status.label}
+            </span>
+          ) : (
+            <span
+              className="text-[10px] font-semibold px-2 py-0.5 rounded-full border"
+              style={{
+                background: "var(--accent-50)",
+                color: "var(--accent-500)",
+                borderColor: "var(--accent-100)",
+              }}
+            >
+              Aman
+            </span>
+          )}
+
           {!editing && (
             <>
               <button
                 onClick={() => setEditing(true)}
-                className="p-1.5 rounded-lg text-stone-300 hover:text-rose-400 hover:bg-rose-50 active:bg-rose-50 active:text-rose-400 transition-all"
+                className="p-1.5 rounded-lg text-stone-300 hover:bg-stone-50 active:bg-stone-50 transition-all"
+                style={undefined}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "var(--accent-400)")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "")}
                 aria-label="Edit budget"
               >
                 <Pencil className="w-3.5 h-3.5" />
@@ -122,12 +141,11 @@ export function BudgetCard({ budget, spent }: Props) {
       {/* progress bar */}
       <div className="h-2 bg-stone-100 rounded-full overflow-hidden mb-2">
         <div
-          className={`h-full rounded-full transition-all duration-700 ${status.bar}`}
-          style={{ width: `${Math.min(pct, 100)}%` }}
+          className={`h-full rounded-full transition-all duration-700 ${isOver ? "bg-red-400" : isWarn ? "bg-amber-400" : ""}`}
+          style={!isOver && !isWarn ? { background: "var(--accent-400)", width: `${Math.min(pct, 100)}%` } : { width: `${Math.min(pct, 100)}%` }}
         />
       </div>
 
-      {/* angka bawah */}
       <div className="flex items-center justify-between">
         <p className="text-xs text-stone-500 font-medium">
           {formatCurrency(spent, true)} dipakai

@@ -12,7 +12,6 @@ import { QuickAdd }            from "@/components/dashboard/QuickAdd";
 export default async function DashboardPage() {
   const { month, year } = getCurrentMonthYear();
 
-  // Promise.allSettled — satu query gagal tidak crash semua
   const [walletsRes, txRes, goalsRes, coupleRes] = await Promise.allSettled([
     getWallets(),
     getTransactions({ month, year, limit: 100 }),
@@ -25,7 +24,6 @@ export default async function DashboardPage() {
   const goals        = goalsRes.status   === "fulfilled" ? goalsRes.value   : [];
   const couple       = coupleRes.status  === "fulfilled" ? coupleRes.value  : null;
 
-  // hitung income & expense bulan ini dari hasil query yang sudah difilter server-side
   const monthlyIncome  = transactions
     .filter((t) => t.type === "income")
     .reduce((sum, t) => sum + Number(t.amount), 0);
@@ -40,7 +38,10 @@ export default async function DashboardPage() {
     <>
       {/* greeting */}
       <header className="mb-5 animate-fade-in">
-        <p className="text-xs text-rose-400 font-medium tracking-widest uppercase mb-0.5">
+        <p
+          className="text-xs font-medium tracking-widest uppercase mb-0.5"
+          style={{ color: "var(--accent-400)" }}
+        >
           💕 {couple?.name ?? "Firafi"}
         </p>
         <h1 className="font-display text-2xl font-semibold text-stone-800 leading-tight">
@@ -58,16 +59,9 @@ export default async function DashboardPage() {
         />
       </div>
 
-      {/* wallet scroll */}
       <WalletList wallets={wallets} />
-
-      {/* goals preview */}
       <GoalsPreview goals={goals} />
-
-      {/* transaksi terbaru */}
       <RecentTransactions transactions={recentTx} />
-
-      {/* FAB */}
       <QuickAdd />
     </>
   );

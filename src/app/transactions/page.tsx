@@ -37,12 +37,11 @@ export default async function TransactionsPage({ searchParams }: Props) {
         emoji="💸"
       />
 
-      {/* filter — client component, wrap Suspense karena pakai useSearchParams */}
       <Suspense>
         <TransactionFilter />
       </Suspense>
 
-      {/* ringkasan bulan */}
+      {/* ringkasan — income tetap emerald (semantik), expense pakai tema */}
       <div className="grid grid-cols-2 gap-3 mb-5 animate-slide-up">
         <div className="bg-emerald-50 rounded-2xl px-4 py-3 border border-emerald-100">
           <p className="text-[11px] font-semibold text-emerald-600 uppercase tracking-wide mb-0.5">
@@ -52,18 +51,23 @@ export default async function TransactionsPage({ searchParams }: Props) {
             {formatCurrency(income)}
           </p>
         </div>
-        <div className="bg-rose-50 rounded-2xl px-4 py-3 border border-rose-100">
-          <p className="text-[11px] font-semibold text-rose-500 uppercase tracking-wide mb-0.5">
+        <div
+          className="rounded-2xl px-4 py-3 border"
+          style={{ background: "var(--accent-50)", borderColor: "var(--accent-100)" }}
+        >
+          <p
+            className="text-[11px] font-semibold uppercase tracking-wide mb-0.5"
+            style={{ color: "var(--accent-500)" }}
+          >
             Keluar
           </p>
-          <p className="font-display text-lg font-semibold text-rose-600">
+          <p className="font-display text-lg font-semibold" style={{ color: "var(--accent-600)" }}>
             {formatCurrency(expense)}
           </p>
         </div>
       </div>
 
-      {/* list transaksi */}
-      <div className="bg-white rounded-2xl shadow-card overflow-hidden animate-slide-up mb-6">
+      <div className="bg-white rounded-2xl overflow-hidden animate-slide-up mb-6" style={{ boxShadow: "var(--shadow-card)" }}>
         {transactions.length === 0 ? (
           <div className="py-14 text-center">
             <p className="text-3xl mb-2">🧾</p>
