@@ -9,7 +9,7 @@ import {
   uuid,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
-import { relations, sql } from "drizzle-orm"; // fix: tambah sql
+import { relations, sql } from "drizzle-orm";
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
@@ -43,11 +43,11 @@ export const couples = pgTable("couples", {
 export const coupleMembers = pgTable(
   "couple_members",
   {
-    id:        serial("id").primaryKey(),
-    coupleId:  integer("couple_id").notNull().references(() => couples.id, { onDelete: "cascade" }),
-    userId:    uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-    role:      coupleRoleEnum("role").notNull(),
-    joinedAt:  timestamp("joined_at", { withTimezone: true }).defaultNow().notNull(),
+    id:       serial("id").primaryKey(),
+    coupleId: integer("couple_id").notNull().references(() => couples.id, { onDelete: "cascade" }),
+    userId:   uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    role:     coupleRoleEnum("role").notNull(),
+    joinedAt: timestamp("joined_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => ({
     uniqueMember: uniqueIndex("unique_couple_member").on(t.coupleId, t.userId),
@@ -58,7 +58,7 @@ export const coupleMembers = pgTable(
 
 export const wallets = pgTable("wallets", {
   id:        serial("id").primaryKey(),
-  coupleId:  integer("couple_id").notNull().references(() => couples.id, { onDelete: "cascade" }),
+  coupleId:  integer("couple_id").references(() => couples.id, { onDelete: "cascade" }), // nullable: support solo
   ownerId:   uuid("owner_id").references(() => users.id),
   name:      text("name").notNull(),
   type:      walletTypeEnum("type").default("cash").notNull(),
@@ -70,24 +70,25 @@ export const wallets = pgTable("wallets", {
 // ─── Transactions ─────────────────────────────────────────────────────────────
 
 export const transactions = pgTable("transactions", {
-  id:          serial("id").primaryKey(),
-  coupleId:    integer("couple_id").notNull().references(() => couples.id, { onDelete: "cascade" }),
-  walletId:    integer("wallet_id").notNull().references(() => wallets.id),
-  userId:      uuid("user_id").notNull().references(() => users.id),
-  type:        transactionTypeEnum("type").notNull(),
-  amount:      numeric("amount", { precision: 15, scale: 2 }).notNull(),
-  category:    text("category").notNull(),
-  note:        text("note"),
-  date:        timestamp("date", { withTimezone: true }).notNull(),
-  receiptUrl:  text("receipt_url"),
-  createdAt:   timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  id:         serial("id").primaryKey(),
+  coupleId:   integer("couple_id").references(() => couples.id, { onDelete: "cascade" }), // nullable: support solo
+  walletId:   integer("wallet_id").notNull().references(() => wallets.id),
+  userId:     uuid("user_id").notNull().references(() => users.id),
+  type:       transactionTypeEnum("type").notNull(),
+  amount:     numeric("amount", { precision: 15, scale: 2 }).notNull(),
+  category:   text("category").notNull(),
+  note:       text("note"),
+  date:       timestamp("date", { withTimezone: true }).notNull(),
+  receiptUrl: text("receipt_url"),
+  createdAt:  timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 // ─── Budgets ──────────────────────────────────────────────────────────────────
 
 export const budgets = pgTable("budgets", {
   id:        serial("id").primaryKey(),
-  coupleId:  integer("couple_id").notNull().references(() => couples.id, { onDelete: "cascade" }),
+  coupleId:  integer("couple_id").references(() => couples.id, { onDelete: "cascade" }), // nullable: support solo
+  userId:    uuid("user_id").references(() => users.id),                                  // untuk filter solo
   category:  text("category").notNull(),
   amount:    numeric("amount", { precision: 15, scale: 2 }).notNull(),
   month:     integer("month").notNull(),
@@ -101,7 +102,8 @@ export const allocationTemplates = pgTable(
   "allocation_templates",
   {
     id:        serial("id").primaryKey(),
-    coupleId:  integer("couple_id").notNull().references(() => couples.id, { onDelete: "cascade" }),
+    coupleId:  integer("couple_id").references(() => couples.id, { onDelete: "cascade" }), // nullable: support solo
+    userId:    uuid("user_id").references(() => users.id),                                  // untuk filter solo
     name:      text("name").notNull(),
     isDefault: integer("is_default").default(0).notNull(),
     rules:     text("rules").notNull(), // JSON: AllocationRule[]
@@ -109,7 +111,6 @@ export const allocationTemplates = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => ({
-    // fix: pakai sql tag yang sudah diimport
     uniqueDefault: uniqueIndex("unique_default_template")
       .on(t.coupleId, t.isDefault)
       .where(sql`is_default = 1`),
@@ -120,7 +121,8 @@ export const allocationTemplates = pgTable(
 
 export const goals = pgTable("goals", {
   id:           serial("id").primaryKey(),
-  coupleId:     integer("couple_id").notNull().references(() => couples.id, { onDelete: "cascade" }),
+  coupleId:     integer("couple_id").references(() => couples.id, { onDelete: "cascade" }), // nullable: support solo
+  userId:       uuid("user_id").references(() => users.id),                                  // untuk filter solo
   name:         text("name").notNull(),
   targetAmount: numeric("target_amount", { precision: 15, scale: 2 }).notNull(),
   savedAmount:  numeric("saved_amount",  { precision: 15, scale: 2 }).default("0").notNull(),
@@ -134,7 +136,7 @@ export const goals = pgTable("goals", {
 
 export const moments = pgTable("moments", {
   id:            serial("id").primaryKey(),
-  coupleId:      integer("couple_id").notNull().references(() => couples.id, { onDelete: "cascade" }),
+  coupleId:      integer("couple_id").references(() => couples.id, { onDelete: "cascade" }), // nullable: support solo
   uploaderId:    uuid("uploader_id").notNull().references(() => users.id),
   transactionId: integer("transaction_id").references(() => transactions.id, { onDelete: "set null" }),
   imageUrl:      text("image_url").notNull(),
@@ -146,13 +148,15 @@ export const moments = pgTable("moments", {
 // ─── Relations ────────────────────────────────────────────────────────────────
 
 export const usersRelations = relations(users, ({ many }) => ({
-  memberships:  many(coupleMembers),
-  wallets:      many(wallets),
-  transactions: many(transactions),
-  moments:      many(moments),
+  memberships:         many(coupleMembers),
+  wallets:             many(wallets),
+  transactions:        many(transactions),
+  moments:             many(moments),
+  budgets:             many(budgets),
+  goals:               many(goals),
+  allocationTemplates: many(allocationTemplates),
 }));
 
-// fix: hanya 1 couplesRelations, sudah include allocationTemplates
 export const couplesRelations = relations(couples, ({ many }) => ({
   members:             many(coupleMembers),
   wallets:             many(wallets),
@@ -183,14 +187,17 @@ export const transactionsRelations = relations(transactions, ({ one, many }) => 
 
 export const budgetsRelations = relations(budgets, ({ one }) => ({
   couple: one(couples, { fields: [budgets.coupleId], references: [couples.id] }),
+  user:   one(users,   { fields: [budgets.userId],   references: [users.id]   }),
 }));
 
 export const allocationTemplatesRelations = relations(allocationTemplates, ({ one }) => ({
   couple: one(couples, { fields: [allocationTemplates.coupleId], references: [couples.id] }),
+  user:   one(users,   { fields: [allocationTemplates.userId],   references: [users.id]   }),
 }));
 
 export const goalsRelations = relations(goals, ({ one }) => ({
   couple: one(couples, { fields: [goals.coupleId], references: [couples.id] }),
+  user:   one(users,   { fields: [goals.userId],   references: [users.id]   }),
 }));
 
 export const momentsRelations = relations(moments, ({ one }) => ({

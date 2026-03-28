@@ -5,8 +5,8 @@ import { allocationTemplates, budgets } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getSession } from "./_helpers";
+import { allocationFilter, budgetFilter, ownerFields } from "./_filters";
 import { ok, fail, type ActionResult } from "./types";
-// import tipe dari lib — jangan re-export dari sini (use server tidak boleh export type)
 import type { AllocationRule } from "@/lib/allocation-presets";
 
 export interface AllocationTemplate {
@@ -16,7 +16,7 @@ export interface AllocationTemplate {
   rules:     AllocationRule[];
 }
 
-// ─── GET template aktif ────────────────────────────────────────────────────────
+// ─── GET default template ─────────────────────────────────────────────────────
 
 export async function getDefaultTemplate(): Promise<AllocationTemplate | null> {
   const session = await getSession();
@@ -24,7 +24,7 @@ export async function getDefaultTemplate(): Promise<AllocationTemplate | null> {
 
   const row = await db.query.allocationTemplates.findFirst({
     where: and(
-      eq(allocationTemplates.coupleId, session.coupleId),
+      allocationFilter(session.coupleId, session.userId),
       eq(allocationTemplates.isDefault, 1),
     ),
   });
@@ -39,14 +39,14 @@ export async function getDefaultTemplate(): Promise<AllocationTemplate | null> {
   };
 }
 
-// ─── GET semua template couple ─────────────────────────────────────────────────
+// ─── GET semua template ───────────────────────────────────────────────────────
 
 export async function getAllTemplates(): Promise<AllocationTemplate[]> {
   const session = await getSession();
   if (!session.ok) return [];
 
   const rows = await db.query.allocationTemplates.findMany({
-    where:   eq(allocationTemplates.coupleId, session.coupleId),
+    where:   allocationFilter(session.coupleId, session.userId),
     orderBy: (t, { desc }) => [desc(t.isDefault), desc(t.createdAt)],
   });
 
@@ -58,7 +58,7 @@ export async function getAllTemplates(): Promise<AllocationTemplate[]> {
   }));
 }
 
-// ─── SAVE / UPDATE template ────────────────────────────────────────────────────
+// ─── SAVE / UPDATE template ───────────────────────────────────────────────────
 
 export async function saveTemplate(
   name: string,
@@ -76,18 +76,17 @@ export async function saveTemplate(
   if (setAsDefault) {
     await db.update(allocationTemplates)
       .set({ isDefault: 0 })
-      .where(eq(allocationTemplates.coupleId, session.coupleId));
+      .where(allocationFilter(session.coupleId, session.userId));
   }
 
   const [saved] = await db.insert(allocationTemplates).values({
-    coupleId:  session.coupleId,
+    ...ownerFields(session.coupleId, session.userId),
     name,
     isDefault: setAsDefault ? 1 : 0,
     rules:     JSON.stringify(rules),
   }).returning();
 
   revalidatePath("/settings");
-
   return ok({
     id:        saved.id,
     name:      saved.name,
@@ -96,7 +95,7 @@ export async function saveTemplate(
   });
 }
 
-// ─── SET DEFAULT template ──────────────────────────────────────────────────────
+// ─── SET DEFAULT template ─────────────────────────────────────────────────────
 
 export async function setDefaultTemplate(templateId: number): Promise<ActionResult<{ id: number }>> {
   const session = await getSession();
@@ -104,26 +103,26 @@ export async function setDefaultTemplate(templateId: number): Promise<ActionResu
 
   await db.update(allocationTemplates)
     .set({ isDefault: 0 })
-    .where(eq(allocationTemplates.coupleId, session.coupleId));
+    .where(allocationFilter(session.coupleId, session.userId));
 
   await db.update(allocationTemplates)
     .set({ isDefault: 1 })
     .where(and(
       eq(allocationTemplates.id, templateId),
-      eq(allocationTemplates.coupleId, session.coupleId),
+      allocationFilter(session.coupleId, session.userId),
     ));
 
   revalidatePath("/settings");
   return ok({ id: templateId });
 }
 
-// ─── APPLY ALLOCATION ke budget ────────────────────────────────────────────────
+// ─── APPLY ALLOCATION ke budget ───────────────────────────────────────────────
 
 export async function applyAllocation(
-  income:  number,
-  rules:   AllocationRule[],
-  month:   number,
-  year:    number,
+  income: number,
+  rules:  AllocationRule[],
+  month:  number,
+  year:   number,
 ): Promise<ActionResult<{ created: number; skipped: number }>> {
   const session = await getSession();
   if (!session.ok) return session.error;
@@ -138,7 +137,7 @@ export async function applyAllocation(
 
     const existing = await db.query.budgets.findFirst({
       where: and(
-        eq(budgets.coupleId, session.coupleId),
+        budgetFilter(session.coupleId, session.userId),
         eq(budgets.category, rule.category),
         eq(budgets.month, month),
         eq(budgets.year, year),
@@ -152,7 +151,7 @@ export async function applyAllocation(
       skipped++;
     } else {
       await db.insert(budgets).values({
-        coupleId: session.coupleId,
+        ...ownerFields(session.coupleId, session.userId),
         category: rule.category,
         amount:   String(amount),
         month,
@@ -166,17 +165,18 @@ export async function applyAllocation(
   return ok({ created, skipped });
 }
 
-// ─── DELETE template ───────────────────────────────────────────────────────────
+// ─── DELETE template ──────────────────────────────────────────────────────────
 
 export async function deleteTemplate(templateId: number): Promise<ActionResult<{ id: number }>> {
   const session = await getSession();
   if (!session.ok) return session.error;
 
-  await db.delete(allocationTemplates)
-    .where(and(
+  await db.delete(allocationTemplates).where(
+    and(
       eq(allocationTemplates.id, templateId),
-      eq(allocationTemplates.coupleId, session.coupleId),
-    ));
+      allocationFilter(session.coupleId, session.userId),
+    )
+  );
 
   revalidatePath("/settings");
   return ok({ id: templateId });

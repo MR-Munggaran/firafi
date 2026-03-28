@@ -18,7 +18,6 @@ export async function getCurrentUser(): Promise<User | null> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
-  // findFirst returns undefined jika tidak ada — konversi ke null
   return (await db.query.users.findFirst({
     where: eq(users.id, user.id),
   })) ?? null;
@@ -30,8 +29,16 @@ export async function getCoupleMembers(): Promise<User[]> {
   const session = await getSession();
   if (!session.ok) return [];
 
+  // solo user tidak punya couple — kembalikan hanya diri sendiri
+  if (!session.coupleId) {
+    const me = await db.query.users.findFirst({
+      where: eq(users.id, session.userId),
+    });
+    return me ? [me] : [];
+  }
+
   const result = await db.query.coupleMembers.findMany({
-    where: (cm, { eq }) => eq(cm.coupleId, session.coupleId),
+    where: (cm, { eq }) => eq(cm.coupleId, session.coupleId!),
     with:  { user: true },
   });
 
@@ -41,7 +48,7 @@ export async function getCoupleMembers(): Promise<User[]> {
 // ─── UPDATE PROFILE ───────────────────────────────────────────────────────────
 
 export async function updateProfile(input: {
-  name?: string;
+  name?:      string;
   avatarUrl?: string;
 }): Promise<ActionResult<User>> {
   const session = await getSession();

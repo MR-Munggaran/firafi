@@ -6,6 +6,7 @@ import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { budgetSchema } from "@/lib/validations";
 import { getSession } from "./_helpers";
+import { budgetFilter, ownerFields } from "./_filters";
 import { ok, fail, type ActionResult } from "./types";
 import type { InferSelectModel } from "drizzle-orm";
 
@@ -19,7 +20,7 @@ export async function getBudgets(month: number, year: number): Promise<Budget[]>
 
   return db.query.budgets.findMany({
     where: and(
-      eq(budgets.coupleId, session.coupleId),
+      budgetFilter(session.coupleId, session.userId),
       eq(budgets.month, month),
       eq(budgets.year, year),
     ),
@@ -41,7 +42,7 @@ export async function createBudget(input: unknown): Promise<ActionResult<Budget>
 
   const existing = await db.query.budgets.findFirst({
     where: and(
-      eq(budgets.coupleId, session.coupleId),
+      budgetFilter(session.coupleId, session.userId),
       eq(budgets.category, category),
       eq(budgets.month, month),
       eq(budgets.year, year),
@@ -50,9 +51,9 @@ export async function createBudget(input: unknown): Promise<ActionResult<Budget>
   if (existing) return fail(`Budget untuk ${category} bulan ini sudah ada`);
 
   const [budget] = await db.insert(budgets).values({
-    coupleId: session.coupleId,
+    ...ownerFields(session.coupleId, session.userId),
     category,
-    amount:   String(amount),
+    amount: String(amount),
     month,
     year,
   }).returning();
@@ -63,10 +64,7 @@ export async function createBudget(input: unknown): Promise<ActionResult<Budget>
 
 // ─── UPDATE ───────────────────────────────────────────────────────────────────
 
-export async function updateBudget(
-  id: number,
-  amount: number,
-): Promise<ActionResult<Budget>> {
+export async function updateBudget(id: number, amount: number): Promise<ActionResult<Budget>> {
   const session = await getSession();
   if (!session.ok) return session.error;
 
@@ -74,7 +72,7 @@ export async function updateBudget(
 
   const [updated] = await db.update(budgets)
     .set({ amount: String(amount) })
-    .where(and(eq(budgets.id, id), eq(budgets.coupleId, session.coupleId)))
+    .where(and(eq(budgets.id, id), budgetFilter(session.coupleId, session.userId)))
     .returning();
 
   if (!updated) return fail("Budget tidak ditemukan");
@@ -89,8 +87,9 @@ export async function deleteBudget(id: number): Promise<ActionResult<{ id: numbe
   const session = await getSession();
   if (!session.ok) return session.error;
 
-  await db.delete(budgets)
-    .where(and(eq(budgets.id, id), eq(budgets.coupleId, session.coupleId)));
+  await db.delete(budgets).where(
+    and(eq(budgets.id, id), budgetFilter(session.coupleId, session.userId))
+  );
 
   revalidatePath("/budget");
   return ok({ id });

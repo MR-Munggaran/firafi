@@ -8,9 +8,6 @@ import {
   ArrowLeftRight,
   PiggyBank,
   Target,
-  Wallet,
-  Camera,
-  Settings,
   MoreHorizontal,
   LucideIcon
 } from "lucide-react";
@@ -34,7 +31,6 @@ export function BottomNav() {
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + "/");
 
-  // Cek apakah salah satu MORE_NAV sedang aktif
   const moreActive = MORE_NAV.some(({ href }) => isActive(href));
 
   return (
@@ -48,8 +44,13 @@ export function BottomNav() {
 
       <nav
         aria-label="Navigasi utama"
-        style={{ height: "var(--bottom-nav-h)", borderColor: "var(--border)" }}
-        className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-t safe-bottom"
+        style={{ borderColor: "var(--border)" }}
+        className="
+          fixed bottom-0 left-0 right-0 z-50
+          bg-white/90 backdrop-blur-md border-t
+          /* safe-area-inset: padding bawah untuk notch iPhone */
+          pb-[env(safe-area-inset-bottom,0px)]
+        "
       >
         {/* garis gradient tipis di atas */}
         <div
@@ -60,7 +61,7 @@ export function BottomNav() {
           }}
         />
 
-        {/* Dropup Menu — tanpa icon, teks saja */}
+        {/* Dropup Menu */}
         <div
           className={`
             absolute bottom-full right-4 mb-2 min-w-[130px]
@@ -91,8 +92,11 @@ export function BottomNav() {
           </div>
         </div>
 
-        {/* Tab bar utama */}
-        <ul className="flex h-full items-center justify-around px-2">
+        {/* Tab bar — height tetap via CSS var, min-h untuk touchability */}
+        <ul
+          className="flex items-center justify-around px-2"
+          style={{ height: "var(--bottom-nav-h, 64px)" }}
+        >
           {MAIN_NAV.map(({ href, label, icon: Icon }) => (
             <li key={href} className="flex-1">
               <NavItem
@@ -108,9 +112,8 @@ export function BottomNav() {
           <li className="flex-1">
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="flex flex-col items-center justify-center gap-0.5 py-1 w-full"
+              className="flex flex-col items-center justify-center gap-0.5 py-1 w-full min-h-[44px]"
             >
-              {/* Icon MoreHorizontal hanya muncul saat salah satu MORE_NAV aktif atau dropdown terbuka */}
               {(isOpen || moreActive) ? (
                 <span
                   className="relative flex items-center justify-center w-10 h-7 rounded-full"
@@ -119,9 +122,7 @@ export function BottomNav() {
                   <MoreHorizontal className="w-4 h-4 text-white" />
                 </span>
               ) : (
-                <span className="h-7 flex items-center">
-                  {/* spacer agar tinggi konsisten */}
-                </span>
+                <span className="h-7 flex items-center" />
               )}
               <span
                 className="text-[10px] font-medium"
@@ -151,9 +152,8 @@ function NavItem({
   return (
     <Link
       href={href}
-      className="flex flex-col items-center justify-center gap-0.5 py-1 group"
+      className="flex flex-col items-center justify-center gap-0.5 py-1 group min-h-[44px]"
     >
-      {/* Icon hanya tampil saat aktif */}
       {active ? (
         <span
           className="relative flex items-center justify-center w-10 h-7 rounded-full"
@@ -165,7 +165,6 @@ function NavItem({
           <Icon className="w-4 h-4 text-white" strokeWidth={2.5} />
         </span>
       ) : (
-        /* spacer supaya tinggi tab tetap konsisten */
         <span className="h-7 flex items-center" />
       )}
 

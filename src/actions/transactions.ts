@@ -6,6 +6,7 @@ import { eq, and, desc, gte, lte, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { transactionSchema } from "@/lib/validations";
 import { getSession } from "./_helpers";
+import { walletFilter, txFilter, ownerFields } from "./_filters";
 import { ok, fail, type ActionResult } from "./types";
 import type { InferSelectModel } from "drizzle-orm";
 
@@ -23,6 +24,12 @@ export interface TransactionFilter {
   limit?:    number;
 }
 
+function revalidate() {
+  revalidatePath("/transactions");
+  revalidatePath("/dashboard");
+  revalidatePath("/wallets");
+}
+
 // ─── GET ──────────────────────────────────────────────────────────────────────
 
 export async function getTransactions(
@@ -33,7 +40,7 @@ export async function getTransactions(
 
   const { month, year, type, walletId, limit = 100 } = filter;
 
-  const conditions = [eq(transactions.coupleId, session.coupleId)];
+  const conditions = [txFilter(session.coupleId, session.userId)];
   if (type)     conditions.push(eq(transactions.type, type));
   if (walletId) conditions.push(eq(transactions.walletId, walletId));
   if (month && year) {
@@ -68,12 +75,12 @@ export async function createTransaction(input: unknown): Promise<ActionResult<Tr
   const { walletId, type, amount, category, note, date, receiptUrl } = parsed.data;
 
   const wallet = await db.query.wallets.findFirst({
-    where: and(eq(wallets.id, walletId), eq(wallets.coupleId, session.coupleId)),
+    where: and(eq(wallets.id, walletId), walletFilter(session.coupleId, session.userId)),
   });
   if (!wallet) return fail("Dompet tidak ditemukan");
 
   const [tx] = await db.insert(transactions).values({
-    coupleId:   session.coupleId,
+    ...ownerFields(session.coupleId, session.userId),
     walletId,
     userId:     session.userId,
     type,
@@ -89,9 +96,7 @@ export async function createTransaction(input: unknown): Promise<ActionResult<Tr
     .set({ balance: sql`balance + ${String(delta)}` })
     .where(eq(wallets.id, walletId));
 
-  revalidatePath("/transactions");
-  revalidatePath("/dashboard");
-  revalidatePath("/wallets");
+  revalidate();
   return ok(tx);
 }
 
@@ -102,7 +107,7 @@ export async function deleteTransaction(id: number): Promise<ActionResult<{ id: 
   if (!session.ok) return session.error;
 
   const tx = await db.query.transactions.findFirst({
-    where: and(eq(transactions.id, id), eq(transactions.coupleId, session.coupleId)),
+    where: and(eq(transactions.id, id), txFilter(session.coupleId, session.userId)),
   });
   if (!tx) return fail("Transaksi tidak ditemukan");
 
@@ -115,11 +120,10 @@ export async function deleteTransaction(id: number): Promise<ActionResult<{ id: 
     .set({ balance: sql`balance + ${String(delta)}` })
     .where(eq(wallets.id, tx.walletId));
 
-  await db.delete(transactions)
-    .where(and(eq(transactions.id, id), eq(transactions.coupleId, session.coupleId)));
+  await db.delete(transactions).where(
+    and(eq(transactions.id, id), txFilter(session.coupleId, session.userId))
+  );
 
-  revalidatePath("/transactions");
-  revalidatePath("/dashboard");
-  revalidatePath("/wallets");
+  revalidate();
   return ok({ id });
 }

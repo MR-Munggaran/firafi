@@ -6,10 +6,16 @@ import { eq, and, asc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { goalSchema } from "@/lib/validations";
 import { getSession } from "./_helpers";
+import { goalFilter, ownerFields } from "./_filters";
 import { ok, fail, type ActionResult } from "./types";
 import type { InferSelectModel } from "drizzle-orm";
 
 export type Goal = InferSelectModel<typeof goals>;
+
+function revalidate() {
+  revalidatePath("/goals");
+  revalidatePath("/dashboard");
+}
 
 // ─── GET ──────────────────────────────────────────────────────────────────────
 
@@ -18,7 +24,7 @@ export async function getGoals(): Promise<Goal[]> {
   if (!session.ok) return [];
 
   return db.query.goals.findMany({
-    where:   eq(goals.coupleId, session.coupleId),
+    where:   goalFilter(session.coupleId, session.userId),
     orderBy: asc(goals.createdAt),
   });
 }
@@ -37,7 +43,7 @@ export async function createGoal(input: unknown): Promise<ActionResult<Goal>> {
   const { name, targetAmount, savedAmount, targetDate, emoji } = parsed.data;
 
   const [goal] = await db.insert(goals).values({
-    coupleId:     session.coupleId,
+    ...ownerFields(session.coupleId, session.userId),
     name,
     targetAmount: String(targetAmount),
     savedAmount:  String(savedAmount ?? 0),
@@ -46,24 +52,20 @@ export async function createGoal(input: unknown): Promise<ActionResult<Goal>> {
     status:       "ongoing",
   }).returning();
 
-  revalidatePath("/goals");
-  revalidatePath("/dashboard");
+  revalidate();
   return ok(goal);
 }
 
 // ─── ADD TO GOAL ──────────────────────────────────────────────────────────────
 
-export async function addToGoal(
-  id: number,
-  amount: number,
-): Promise<ActionResult<Goal>> {
+export async function addToGoal(id: number, amount: number): Promise<ActionResult<Goal>> {
   const session = await getSession();
   if (!session.ok) return session.error;
 
   if (amount <= 0) return fail("Nominal harus lebih dari 0");
 
   const goal = await db.query.goals.findFirst({
-    where: and(eq(goals.id, id), eq(goals.coupleId, session.coupleId)),
+    where: and(eq(goals.id, id), goalFilter(session.coupleId, session.userId)),
   });
   if (!goal) return fail("Target tidak ditemukan");
 
@@ -72,20 +74,16 @@ export async function addToGoal(
 
   const [updated] = await db.update(goals)
     .set({ savedAmount: String(newSaved), status: newStatus })
-    .where(and(eq(goals.id, id), eq(goals.coupleId, session.coupleId)))
+    .where(and(eq(goals.id, id), goalFilter(session.coupleId, session.userId)))
     .returning();
 
-  revalidatePath("/goals");
-  revalidatePath("/dashboard");
+  revalidate();
   return ok(updated);
 }
 
 // ─── UPDATE ───────────────────────────────────────────────────────────────────
 
-export async function updateGoal(
-  id: number,
-  input: unknown,
-): Promise<ActionResult<Goal>> {
+export async function updateGoal(id: number, input: unknown): Promise<ActionResult<Goal>> {
   const session = await getSession();
   if (!session.ok) return session.error;
 
@@ -103,7 +101,7 @@ export async function updateGoal(
 
   const [updated] = await db.update(goals)
     .set(updates)
-    .where(and(eq(goals.id, id), eq(goals.coupleId, session.coupleId)))
+    .where(and(eq(goals.id, id), goalFilter(session.coupleId, session.userId)))
     .returning();
 
   if (!updated) return fail("Target tidak ditemukan");
@@ -118,10 +116,10 @@ export async function deleteGoal(id: number): Promise<ActionResult<{ id: number 
   const session = await getSession();
   if (!session.ok) return session.error;
 
-  await db.delete(goals)
-    .where(and(eq(goals.id, id), eq(goals.coupleId, session.coupleId)));
+  await db.delete(goals).where(
+    and(eq(goals.id, id), goalFilter(session.coupleId, session.userId))
+  );
 
-  revalidatePath("/goals");
-  revalidatePath("/dashboard");
+  revalidate();
   return ok({ id });
 }

@@ -8,7 +8,6 @@ export * from "./wallets";
 export * from "./transactions";
 export * from "./budgets";
 export * from "./goals";
-export * from "./moments";
 export * from "./couples";
 
 // ─── Auth (export terpisah — biasanya diimport langsung) ─────────────────────

@@ -13,7 +13,7 @@ export function RecentTransactions({ transactions }: Props) {
   return (
     <section className="mb-6 animate-slide-up">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="font-display text-lg font-semibold text-stone-700">Transaksi Terbaru</h2>
+        <h2 className="font-display text-base sm:text-lg font-semibold text-stone-700">Transaksi Terbaru</h2>
         <Link href="/transactions" className="text-xs font-medium" style={{ color: "var(--accent-400)" }}>
           Lihat semua →
         </Link>
@@ -39,7 +39,7 @@ export function RecentTransactions({ transactions }: Props) {
               return (
                 <li
                   key={tx.id}
-                  className={`flex items-center gap-3 px-4 py-3 ${i !== transactions.length - 1 ? "border-b border-stone-50" : ""}`}
+                  className={`flex items-center gap-3 px-3 sm:px-4 py-3 ${i !== transactions.length - 1 ? "border-b border-stone-50" : ""}`}
                 >
                   <div
                     className="w-9 h-9 rounded-xl flex items-center justify-center text-sm flex-shrink-0"
@@ -47,6 +47,7 @@ export function RecentTransactions({ transactions }: Props) {
                   >
                     {getCategoryEmoji(tx.category)}
                   </div>
+
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-stone-700 truncate leading-tight">
                       {getCategoryLabel(tx.category)}
@@ -55,6 +56,7 @@ export function RecentTransactions({ transactions }: Props) {
                       {tx.user.name} · {formatDateShort(tx.date)}
                     </p>
                   </div>
+
                   <p
                     className="text-sm font-semibold flex-shrink-0"
                     style={{ color: isIncome ? "#10b981" : "var(--accent-500)" }}

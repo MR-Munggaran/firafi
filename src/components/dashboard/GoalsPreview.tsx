@@ -13,7 +13,7 @@ export function GoalsPreview({ goals }: Props) {
   return (
     <section className="mb-6 animate-slide-up">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="font-display text-lg font-semibold text-stone-700">Target Kita 🌟</h2>
+        <h2 className="font-display text-base sm:text-lg font-semibold text-stone-700">Target Kita 🌟</h2>
         <Link href="/goals" className="text-xs text-rose-400 font-medium">
           Lihat semua →
         </Link>
@@ -21,7 +21,6 @@ export function GoalsPreview({ goals }: Props) {
 
       <div className="space-y-3">
         {activeGoals.map((goal) => {
-          // schema v2: savedAmount & targetAmount (string dari numeric)
           const saved  = Number(goal.savedAmount);
           const target = Number(goal.targetAmount);
           const pct    = calcPercent(saved, target);
@@ -30,10 +29,10 @@ export function GoalsPreview({ goals }: Props) {
           return (
             <div
               key={goal.id}
-              className="bg-white rounded-2xl p-4 shadow-card flex items-center gap-4"
+              className="bg-white rounded-2xl p-3 sm:p-4 shadow-card flex items-center gap-3 sm:gap-4"
             >
-              {/* emoji dari schema v2 */}
-              <div className="w-12 h-12 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0 text-2xl">
+              {/* emoji */}
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-rose-50 flex items-center justify-center flex-shrink-0 text-xl sm:text-2xl">
                 {goal.emoji ?? "🎯"}
               </div>
 

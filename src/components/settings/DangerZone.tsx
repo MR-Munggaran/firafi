@@ -8,22 +8,27 @@ import { toast } from "sonner";
 import { LogOut, AlertTriangle } from "lucide-react";
 
 export function DangerZone() {
-  const router = useRouter();
+  const router  = useRouter();
   const [leaving, setLeaving] = useState(false);
 
   async function handleLeave() {
-    if (!confirm("Keluar dari couple ini? Data kamu akan tetap ada tapi kamu tidak bisa akses data couple.")) return;
+    if (!confirm(
+      "Keluar dari couple ini?\n\n" +
+      "Data kamu (transaksi, dompet, goals) akan kembali jadi milik pribadi dan tetap bisa diakses."
+    )) return;
+
     setLeaving(true);
     const result = await leaveCouple();
     setLeaving(false);
+
     if (!result.success) return toast.error(result.error);
-    toast.success("Kamu telah keluar dari couple");
-    router.push("/onboarding");
+
+    toast.success("Kamu telah keluar dari couple. Data kamu tetap aman.");
+    router.push("/dashboard");
   }
 
   async function handleLogout() {
     await logout();
-    router.push("/login");
   }
 
   return (
@@ -42,7 +47,6 @@ export function DangerZone() {
           <span className="text-sm font-medium text-stone-600">Keluar Akun</span>
         </button>
 
-        {/* divider */}
         <div className="h-px bg-stone-50" />
 
         {/* leave couple */}
