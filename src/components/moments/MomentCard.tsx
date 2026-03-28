@@ -26,7 +26,7 @@ export function MomentCard({ moment }: { moment: MomentWithRelations }) {
   return (
     <div className="rounded-3xl overflow-hidden bg-white shadow-sm border border-stone-100 flex flex-col">
       {/* Image */}
-      <div className="relative aspect-[4/3] w-full">
+      <div className="relative aspect-4/3 w-full">
         <Image
           src={moment.imageUrl}
           alt={moment.caption ?? "Momen"}
@@ -56,7 +56,7 @@ export function MomentCard({ moment }: { moment: MomentWithRelations }) {
             </span>
           </div>
           <Heart
-            className="w-4 h-4 flex-shrink-0"
+            className="w-4 h-4 shrink-0"
             style={{ color: "var(--accent-400)", fill: "var(--accent-400)" }}
           />
         </div>

@@ -9,6 +9,7 @@ import { AllocationModal } from "@/components/AllocationModal";
 import type { WalletWithOwner } from "@/actions/wallets";
 import type { User } from "@/actions/users";
 import type { AllocationTemplate } from "@/actions/allocation";
+import { uploadToCloudinary, UploadError } from "@/lib/uploadToCloudinary";
 
 const EXPENSE_CATEGORIES = [
   "🍔 Makanan & Minuman", "🛒 Belanja", "🚗 Transportasi",
@@ -65,35 +66,43 @@ export function TransactionForm({ wallets, members, defaultTemplate }: Props) {
     e.preventDefault();
     if (!category || !walletId) return toast.error("Pilih kategori dan dompet dulu ya!");
     setLoading(true);
-    const fd = new FormData(e.currentTarget);
+    const fd = new FormData(e.currentTarget); // ✅ capture sebelum await
     let receiptUrl: string | null = null;
 
-    if (receiptFile) {
-      const uploadForm = new FormData();
-      uploadForm.append("file", receiptFile);
-      uploadForm.append("folder", "receipts");
-      const res  = await fetch("/api/upload", { method: "POST", body: uploadForm });
-      const data = await res.json() as { url?: string };
-      if (data.url) receiptUrl = data.url;
+    try {
+      if (receiptFile) {
+        receiptUrl = await uploadToCloudinary(receiptFile, "receipts");
+      }
+
+      const dateRaw = fd.get("date") as string;
+      const amount  = Number(fd.get("amount"));
+      const txDate  = dateRaw ? new Date(dateRaw) : new Date();
+
+      const result = await createTransaction({
+        walletId: Number(walletId), type, category, amount,
+        note: (fd.get("note") as string) || null, receiptUrl, date: txDate,
+      });
+
+      if (!result.success) return toast.error(result.error);
+      toast.success("Transaksi dicatat! 🎉");
+
+      if (type === "income") {
+        setAllocationData({ income: amount, month: txDate.getMonth() + 1, year: txDate.getFullYear(), template: defaultTemplate });
+        return;
+      }
+      router.push("/transactions");
+      router.refresh();
+    } catch (err) {
+      const message =
+        err instanceof UploadError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : "Terjadi kesalahan saat upload";
+      toast.error(message);
+    } finally {
+      setLoading(false);
     }
-
-    const dateRaw = fd.get("date") as string;
-    const amount  = Number(fd.get("amount"));
-    const txDate  = dateRaw ? new Date(dateRaw) : new Date();
-
-    const result = await createTransaction({
-      walletId: Number(walletId), type, category, amount,
-      note: (fd.get("note") as string) || null, receiptUrl, date: txDate,
-    });
-
-    setLoading(false);
-    if (!result.success) return toast.error(result.error);
-    toast.success("Transaksi dicatat! 🎉");
-    if (type === "income") {
-      setAllocationData({ income: amount, month: txDate.getMonth() + 1, year: txDate.getFullYear(), template: defaultTemplate });
-      return;
-    }
-    router.push("/transactions"); router.refresh();
   }
 
   const categories     = type === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;

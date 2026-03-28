@@ -91,7 +91,7 @@ export function MomentForm({ recentTransactions }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-sm flex items-end justify-center sm:items-center p-0 pb-[88px] sm:p-4">
+    <div className="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-sm flex items-end justify-center sm:items-center p-0 pb-22 sm:p-4">
       <div className="absolute inset-0 -z-10" onClick={handleClose} />
 
       <div className="w-[calc(100%-2rem)] mx-4 max-w-md bg-white rounded-t-[2.5rem] sm:rounded-[2rem] overflow-hidden animate-in fade-in slide-in-from-bottom-10 duration-500 max-h-[92dvh] flex flex-col shadow-2xl">
@@ -100,7 +100,7 @@ export function MomentForm({ recentTransactions }: Props) {
         <div className="flex-1 overflow-y-auto overscroll-contain">
 
           {/* Image Upload */}
-          <div className="relative w-full aspect-[4/3] bg-stone-50 border-b border-stone-100">
+          <div className="relative w-full aspect-4/3 bg-stone-50 border-b border-stone-100">
             {preview ? (
               <div className="relative h-full w-full animate-in zoom-in-95 duration-300">
                 <img src={preview} alt="preview" className="w-full h-full object-cover" />

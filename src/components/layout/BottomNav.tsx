@@ -24,7 +24,6 @@ const MAIN_NAV = [
 
 const MORE_NAV = [
   { href: "/wallets",  label: "Dompet"   },
-  { href: "/moments",  label: "Momen"    },
   { href: "/settings", label: "Settings" },
 ] as const;
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { useTransition } from "react";
 
 const MONTHS = [
   "Januari", "Februari", "Maret", "April", "Mei", "Juni",
@@ -12,6 +13,7 @@ export function TransactionFilter() {
   const router   = useRouter();
   const pathname = usePathname();
   const params   = useSearchParams();
+  const [isPending, startTransition] = useTransition();
 
   const now          = new Date();
   const currentMonth = params.get("month") ?? String(now.getMonth() + 1);
@@ -21,16 +23,29 @@ export function TransactionFilter() {
   function update(key: string, value: string) {
     const next = new URLSearchParams(params.toString());
     next.set(key, value);
-    router.push(`${pathname}?${next.toString()}`);
+    startTransition(() => {
+      router.push(`${pathname}?${next.toString()}`);
+    });
   }
 
   return (
     <div className="space-y-3 mb-5">
+      {/* Loading indicator */}
+      {isPending && (
+        <div className="h-0.5 rounded-full overflow-hidden bg-stone-100">
+          <div
+            className="h-full animate-pulse rounded-full"
+            style={{ background: "var(--accent-400)", width: "60%" }}
+          />
+        </div>
+      )}
+
       {/* bulan + tahun */}
-      <div className="flex gap-2">
+      <div className="flex gap-2" style={{ opacity: isPending ? 0.6 : 1, transition: "opacity 0.2s" }}>
         <select
           value={currentMonth}
           onChange={(e) => update("month", e.target.value)}
+          disabled={isPending}
           className="flex-1 bg-white border border-stone-100 rounded-xl px-3 py-2.5 text-sm text-stone-700 outline-none transition-all"
           style={{ boxShadow: "var(--shadow-card)" }}
           onFocus={(e) => { e.currentTarget.style.boxShadow = "0 0 0 2px var(--accent-200, var(--accent-100))"; }}
@@ -41,6 +56,7 @@ export function TransactionFilter() {
         <select
           value={currentYear}
           onChange={(e) => update("year", e.target.value)}
+          disabled={isPending}
           className="w-28 bg-white border border-stone-100 rounded-xl px-3 py-2.5 text-sm text-stone-700 outline-none transition-all"
           style={{ boxShadow: "var(--shadow-card)" }}
           onFocus={(e) => { e.currentTarget.style.boxShadow = "0 0 0 2px var(--accent-200, var(--accent-100))"; }}
@@ -51,7 +67,7 @@ export function TransactionFilter() {
       </div>
 
       {/* tipe */}
-      <div className="flex gap-2">
+      <div className="flex gap-2" style={{ opacity: isPending ? 0.6 : 1, transition: "opacity 0.2s" }}>
         {(["all", "income", "expense"] as const).map((t) => {
           const active = currentType === t;
           const activeStyle =
@@ -62,6 +78,7 @@ export function TransactionFilter() {
             <button
               key={t}
               onClick={() => update("type", t)}
+              disabled={isPending}
               className="flex-1 py-2 rounded-xl text-xs font-semibold transition-all"
               style={active ? activeStyle : { background: "#fff", color: "#a8a29e", boxShadow: "var(--shadow-card)" }}
             >

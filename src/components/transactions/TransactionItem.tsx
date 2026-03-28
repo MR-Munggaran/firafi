@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useOptimistic, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { deleteTransaction } from "@/actions/transactions";
@@ -13,29 +13,43 @@ interface Props {
 }
 
 export function TransactionItem({ tx }: Props) {
-  const router    = useRouter();
-  const [busy, setBusy] = useState(false);
-  const isIncome  = tx.type === "income";
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [isDeleted, setOptimisticDelete] = useOptimistic(false);
+
+  const isIncome = tx.type === "income";
 
   async function handleDelete() {
     if (!confirm("Hapus transaksi ini?")) return;
-    setBusy(true);
-    const result = await deleteTransaction(tx.id);
-    setBusy(false);
-    if (!result.success) return toast.error(result.error);
-    toast.success("Transaksi dihapus");
-    router.refresh();
+
+    startTransition(async () => {
+      setOptimisticDelete(true); // ✅ langsung hilang dari UI
+
+      const result = await deleteTransaction(tx.id);
+      if (!result.success) {
+        toast.error(result.error); // kalau gagal, React auto-revert optimistic state
+        return;
+      }
+      toast.success("Transaksi dihapus");
+      router.refresh();
+    });
   }
 
-  const parts  = tx.category.split(" ");
-  const emoji  = parts[0];
-  const label  = parts.slice(1).join(" ") || tx.category;
+  // Kalau sudah optimistically deleted, sembunyikan item
+  if (isDeleted) return null;
+
+  const parts = tx.category.split(" ");
+  const emoji = parts[0];
+  const label = parts.slice(1).join(" ") || tx.category;
 
   return (
-    <li className="flex items-center gap-3 px-4 py-3.5 border-b border-stone-50 last:border-0 group">
+    <li
+      className="flex items-center gap-3 px-4 py-3.5 border-b border-stone-50 last:border-0 group transition-opacity duration-200"
+      style={{ opacity: isPending ? 0.4 : 1 }}
+    >
       {/* emoji */}
       <div
-        className="w-10 h-10 rounded-xl flex items-center justify-center text-base flex-shrink-0"
+        className="w-10 h-10 rounded-xl flex items-center justify-center text-base shrink-0"
         style={{ background: isIncome ? "var(--accent-50)" : "#f0fdf4" }}
       >
         {emoji}
@@ -61,7 +75,7 @@ export function TransactionItem({ tx }: Props) {
       </div>
 
       {/* nominal + hapus */}
-      <div className="flex items-center gap-2 flex-shrink-0">
+      <div className="flex items-center gap-2 shrink-0">
         <p
           className="text-sm font-semibold"
           style={{ color: isIncome ? "#10b981" : "var(--accent-500)" }}
@@ -70,7 +84,7 @@ export function TransactionItem({ tx }: Props) {
         </p>
         <button
           onClick={handleDelete}
-          disabled={busy}
+          disabled={isPending}
           className="opacity-0 group-hover:opacity-100 active:opacity-100 p-1.5 rounded-lg text-stone-300 hover:text-red-400 hover:bg-red-50 transition-all disabled:opacity-30"
           aria-label="Hapus transaksi"
         >

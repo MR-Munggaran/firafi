@@ -5,7 +5,13 @@ const PUBLIC_ROUTES = ["/login", "/register", "/auth"];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  let response = NextResponse.next({ request });
+  
+  // 1. Buat response awal
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -28,19 +34,25 @@ export async function proxy(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // 2. Gunakan getSession() untuk pengecekan yang lebih cepat (dari cookie)
+  // daripada getUser() yang selalu fetch ke server Supabase setiap saat.
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user;
 
   const isPublicRoute = PUBLIC_ROUTES.some((r) => pathname.startsWith(r));
   const isRoot = pathname === "/";
 
+  // Logic Redirect
   if (!user) {
     if (isPublicRoute || isRoot) return response;
-    return NextResponse.redirect(new URL("/login", request.url));
+    // Gunakan URL absolut agar redirect lebih stabil
+    const loginUrl = new URL("/login", request.url);
+    // Tambahkan parameter agar user bisa balik ke page sebelumnya setelah login
+    loginUrl.searchParams.set("next", pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
-  if (isPublicRoute && user) {
+  if (user && isPublicRoute) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
@@ -49,7 +61,13 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Exclude: static files, images, AND /api routes
-    "/((?!_next/static|_next/image|favicon.ico|api|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public folder assets (png, jpg, etc)
+     */
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
